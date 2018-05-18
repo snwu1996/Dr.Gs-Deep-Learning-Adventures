@@ -19,8 +19,8 @@ class Data:
         lig_idx_lower = int(self.batch_index/self.num_smiles)
         lig_idx_upper = int((self.batch_index+batch_size-1)/self.num_smiles)
         smi_idx_lower = self.batch_index-lig_idx_lower*self.num_smiles
-        smi_idx_upper = smi_idx_lower+batch_size-1
-        smi_idx_upper -= int(smi_idx_upper/self.num_smiles)*self.num_smiles
+        smi_idx_upper = smi_idx_lower+batch_size
+        smi_idx_upper -= int((smi_idx_upper-1)/self.num_smiles)*self.num_smiles
         
         if lig_idx_upper-lig_idx_lower == 0:
             ligids_batch = self.ligids[lig_idx_lower,:]
@@ -39,7 +39,7 @@ class Data:
             smiles_batch = np.concatenate((smiles_batch1,smiles_batch2), axis=0)
            
         if lig_idx_upper-lig_idx_lower >= 2:
-            print('batch size greater than ~40k not implemented')
+            raise Exception('batch size too large')
            
         scores_batch = self.scores[self.batch_index:self.batch_index+batch_size]
         self.batch_index += batch_size
@@ -66,10 +66,10 @@ def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi
     num_train_lig = ligids.shape[0]-num_val_lig
     num_train_smi = smiles.shape[0]-num_val_smi
 
-    print('num_valid_ligids: {}'.format(num_val_lig))
-    print('num_train_ligids: {}'.format(num_train_lig))
-    print('num_valid_smiles: {}'.format(num_val_smi))
-    print('num_train_smiles: {}'.format(num_train_smi))
+    print('num validation ligids: {}'.format(num_val_lig))
+    print('num train ligids: {}'.format(num_train_lig))
+    print('num validation smiles: {}'.format(num_val_smi))
+    print('num train smiles: {}'.format(num_train_smi))
 
     train_ligids = ligids[:num_train_lig,:]
     train_smiles = smiles[:num_train_smi,:]
@@ -80,17 +80,18 @@ def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi
     train_labels = []
     validation_labels = []
     data = Data(ligids, smiles, labels)
-    data.reset()
-    for lig_num in range(num_train_lig):
+    for lig_num in range(num_train_lig): # Train labels
         _, _, train_labels_batch = data.next_batch(num_train_smi)
         _, _, _ = data.next_batch(num_val_smi)
         train_labels.append(train_labels_batch)
-    for lig_num in range(num_val_lig):
+    for lig_num in range(num_val_lig): # Validation labels
         _, _, _ = data.next_batch(num_train_smi)
         _, _, validation_labels_batch = data.next_batch(num_val_smi)
         validation_labels.append(validation_labels_batch)
     train_labels = np.concatenate(train_labels, axis=0)
     validation_labels = np.concatenate(validation_labels, axis=0)
+    print('num validation labels: {}'.format(validation_labels.shape[0]))
+    print('num train labels: {}'.format(train_labels.shape[0]))
 
     # Return train and validation datasets
     train_data = Data(train_ligids, train_smiles, train_labels)
