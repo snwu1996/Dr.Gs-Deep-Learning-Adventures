@@ -17,15 +17,10 @@ class Data:
         'batch index out of bound, try doing Data.reset() after stepping through the entire dataset'
         
         lig_idx_lower = int(self.batch_index/self.num_smiles)
-        lig_idx_upper = int((self.batch_index+batch_size)/self.num_smiles)
-        smi_idx_lower = self.batch_index-int(self.batch_index/self.num_smiles)*self.num_smiles
-        smi_idx_upper = smi_idx_lower+batch_size
+        lig_idx_upper = int((self.batch_index+batch_size-1)/self.num_smiles)
+        smi_idx_lower = self.batch_index-lig_idx_lower*self.num_smiles
+        smi_idx_upper = smi_idx_lower+batch_size-1
         smi_idx_upper -= int(smi_idx_upper/self.num_smiles)*self.num_smiles
-        
-#         print('lig_idx_lower{}'.format(lig_idx_lower))
-#         print('lig_idx_upper{}'.format(lig_idx_upper))
-#         print('smi_idx_lower{}'.format(smi_idx_lower))
-#         print('smi_idx_upper{}'.format(smi_idx_upper))
         
         if lig_idx_upper-lig_idx_lower == 0:
             ligids_batch = self.ligids[lig_idx_lower,:]
@@ -63,3 +58,41 @@ class Data:
         self.batch_index = 0
         if shuffle:
             self.shuffle()
+            
+########################################################################################
+
+def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi=10581):
+    # Train valiatation split - X data
+    num_train_lig = ligids.shape[0]-num_val_lig
+    num_train_smi = smiles.shape[0]-num_val_smi
+
+    print('num_valid_ligids: {}'.format(num_val_lig))
+    print('num_train_ligids: {}'.format(num_train_lig))
+    print('num_valid_smiles: {}'.format(num_val_smi))
+    print('num_train_smiles: {}'.format(num_train_smi))
+
+    train_ligids = ligids[:num_train_lig,:]
+    train_smiles = smiles[:num_train_smi,:]
+    validation_ligids = ligids[num_train_lig:,:]
+    validation_smiles = smiles[num_train_smi:,:]
+
+    # Train validation split - Y data
+    train_labels = []
+    validation_labels = []
+    data = Data(ligids, smiles, labels)
+    data.reset()
+    for lig_num in range(num_train_lig):
+        _, _, train_labels_batch = data.next_batch(num_train_smi)
+        _, _, _ = data.next_batch(num_val_smi)
+        train_labels.append(train_labels_batch)
+    for lig_num in range(num_val_lig):
+        _, _, _ = data.next_batch(num_train_smi)
+        _, _, validation_labels_batch = data.next_batch(num_val_smi)
+        validation_labels.append(validation_labels_batch)
+    train_labels = np.concatenate(train_labels, axis=0)
+    validation_labels = np.concatenate(validation_labels, axis=0)
+
+    # Return train and validation datasets
+    train_data = Data(train_ligids, train_smiles, train_labels)
+    validation_data = Data(validation_ligids, validation_smiles, validation_labels)
+    return train_data, validation_data
