@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Data:
     def __init__(self, ligids, smiles, scores):
         self.ligids = ligids
