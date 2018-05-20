@@ -1,9 +1,8 @@
 class Data:
-    def __init__(self, ligids, smiles, scores, autoreset=False):
+    def __init__(self, ligids, smiles, scores):
         self.ligids = ligids
         self.smiles = smiles
         self.scores = scores
-        self.autoreset = autoreset
         self.num_ligids = int(ligids.shape[0])
         self.num_smiles = int(smiles.shape[0])
         self.num_scores = int(scores.shape[0])
@@ -15,6 +14,9 @@ class Data:
     def next_batch(self, batch_size):                
         assert(self.batch_index < self.num_scores), \
         'batch index out of bound, try doing Data.reset() after stepping through the entire dataset'
+        
+        if self.batch_index+batch_size > self.num_scores:
+            batch_size = self.num_score-self.batch_index
         
         lig_idx_lower = int(self.batch_index/self.num_smiles)
         lig_idx_upper = int((self.batch_index+batch_size-1)/self.num_smiles)
