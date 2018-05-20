@@ -8,7 +8,7 @@ class Data:
         self.num_smiles = int(smiles.shape[0])
         self.num_scores = int(scores.shape[0])
         self.batch_index = 0 # Current batch index
-        
+    
         assert(self.num_ligids*self.num_smiles == self.num_scores),\
         'number of ligids times number of smiles must equal number of scores'
     
@@ -46,13 +46,13 @@ class Data:
         return ligids_batch, smiles_batch, scores_batch
 
     def full_batch(self):
-        print('full_batch not implemented')
+        raise NotImplementedError('full_batch not implemented')
     
     def random_batch(self, batch_size):
-        print('random_batch not implemented')
+        raise NotImplementedError('random_batch not implemented')
     
     def shuffle(self):
-        print('shuffle not implemented')
+        raise NotImplementedError('shuffle not implemented')
     
     def reset(self,shuffle=False):
         self.batch_index = 0
@@ -62,6 +62,14 @@ class Data:
 ########################################################################################
 
 def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi=10581):
+    """
+    Example usage:
+        train_data, validation_data = train_validation_split(train_valid_ligids,
+                                                             train_valid_smiles,
+                                                             train_valid_scores,
+                                                             num_val_lig=3046, 
+                                                             num_val_smi=10581)
+    """
     # Train valiatation split - X data
     num_train_lig = ligids.shape[0]-num_val_lig
     num_train_smi = smiles.shape[0]-num_val_smi
