@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Data:
     """
     Input data pipeline class
