@@ -1,7 +1,7 @@
-import numpy as np
-
-
 class Data:
+    """
+    Input data pipeline class
+    """
     def __init__(self, ligids, smiles, scores):
         self.ligids = ligids
         self.smiles = smiles
@@ -54,11 +54,35 @@ class Data:
         raise NotImplementedError('full_batch not implemented')
     
     def random_batch(self, batch_size):
-        raise NotImplementedError('random_batch not implemented')
+        rand_nums = np.random.randint(self.X_data.shape[0], size=(batch_size))
+        X_batch = self.X_data[rand_nums,:,:,:,:]
+        Y_batch = self.Y_data[rand_nums,:,:,:]
+        return X_batch, Y_batch
     
     def shuffle(self):
-        raise NotImplementedError('shuffle not implemented')
-    
+        new_ligids = np.empty(self.ligids.shape, dtype=self.ligids.dtype)
+        new_smiles = np.empty(self.smiles.shape, dtype=self.smiles.dtype)
+        new_scores = np.empty(self.scores.shape, dtype=self.scores.dtype)
+        
+        perm_ligids = np.random.permutation(self.ligids.shape[0])
+        perm_smiles = np.random.permutation(self.smiles.shape[0])
+        
+        for old_idx, new_idx in enumerate(perm_ligids):
+            new_ligids[new_idx] = self.ligids[old_idx]
+        for old_idx, new_idx in enumerate(perm_smiles):
+            new_smiles[new_idx] = self.smiles[old_idx]
+        for old_lig_idx, new_lig_idx in enumerate(perm_ligids):
+            for old_smi_idx, new_smi_idx in enumerate(perm_smiles):
+                if (old_lig_idx*self.num_smiles+old_smi_idx)%100000 == 0:
+                    print('new: {:<10} | old: {:<10}'.format(new_lig_idx*self.num_smiles+new_smi_idx,
+                                                             old_lig_idx*self.num_smiles+old_smi_idx), end='\r')
+                new_scores[new_lig_idx*self.num_smiles+new_smi_idx] = \
+                self.scores[old_lig_idx*self.num_smiles+old_smi_idx]
+                
+        self.ligids = new_ligids
+        self.smiles = new_smiles
+        self.scores = new_scores
+        
     def reset(self,shuffle=False):
         self.batch_index = 0
         if shuffle:
@@ -93,6 +117,7 @@ def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi
     train_labels = []
     validation_labels = []
     data = Data(ligids, smiles, labels)
+    data.shuffle()
     for lig_num in range(num_train_lig): # Train labels
         _, _, train_labels_batch = data.next_batch(num_train_smi)
         _, _, _ = data.next_batch(num_val_smi)
