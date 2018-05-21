@@ -10,12 +10,15 @@ def parse_args():
     parser.add_argument('--batch_size',
                         type=int, 
                         default=10000,
-                        help='name of the model we wish to make submission for')
+                        help='batch size')
+    parser.add_argument('--folder',
+                        type=str,
+                        help='folder that the model is located under')
     parser.add_argument('--model',
                         type=str,
                         help='name of the model we wish to make submission for')
     args = parser.parse_args()
-    return args.batch_size, args.model
+    return args.batch_size, args.folder, args.model
 
 def load_data():
     test_ligids = np.load('../data/PHARM_TEST_X.npy')
@@ -27,17 +30,17 @@ def load_data():
 
 
 def main(): 
-    batch_size, model = parse_args()
+    batch_size, folder, model = parse_args()
 
     test_data = load_data()
     num_test_batches = int(test_data.num_scores/batch_size)+1
 
     # Load model and tensors
     tf.reset_default_graph()
-    loader = tf.train.import_meta_graph('../models/{}.meta'.format(model))
+    loader = tf.train.import_meta_graph('../models/{}/{}.meta'.format(folder, model))
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        loader.restore(sess, '../models/{}'.format(model))
+        loader.restore(sess, '../models/{}/{}'.format(folder, model))
         X, Y, pred_score = tf.get_collection('pred_ops')
 
         # Make predictions
