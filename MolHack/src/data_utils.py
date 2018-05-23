@@ -57,10 +57,7 @@ class Data:
         raise NotImplementedError('full_batch not implemented')
     
     def random_batch(self, batch_size):
-        rand_nums = np.random.randint(self.X_data.shape[0], size=(batch_size))
-        X_batch = self.X_data[rand_nums,:,:,:,:]
-        Y_batch = self.Y_data[rand_nums,:,:,:]
-        return X_batch, Y_batch
+        raise NotImplementedError('random_batch not implemented')
     
     def shuffle(self):
         new_ligids = np.empty(self.ligids.shape, dtype=self.ligids.dtype)
@@ -93,7 +90,7 @@ class Data:
             
 ########################################################################################
 
-def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi=10581):
+def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi=10581, shuffle=True):
     """
     Example usage:
         train_data, validation_data = train_validation_split(train_valid_ligids,
@@ -120,7 +117,8 @@ def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi
     train_labels = []
     validation_labels = []
     data = Data(ligids, smiles, labels)
-    data.shuffle()
+    if shuffle:
+        data.shuffle()
     for lig_num in range(num_train_lig): # Train labels
         _, _, train_labels_batch = data.next_batch(num_train_smi)
         _, _, _ = data.next_batch(num_val_smi)
