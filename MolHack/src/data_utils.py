@@ -136,3 +136,23 @@ def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi
     train_data = Data(train_ligids, train_smiles, train_labels)
     validation_data = Data(validation_ligids, validation_smiles, validation_labels)
     return train_data, validation_data
+
+def remap_scores(scores, map_from, map_to):
+    [print('Remapping {} to {}'.format(_from, _to)) for _from, _to in zip(map_from, map_to)]
+    for _from, _to in zip(map_from, map_to):
+        scores[scores==_from] = _to
+    new_distribution = np.bincount(scores)/scores.shape[0]
+    print('New score distribution: {}'.format(new_distribution))
+    return scores
+
+def reduce_dimensions(data, lower_thresh, upper_thresh):
+    lower_thresh_idx = np.ones(shape=(data.shape[1]))
+    upper_thresh_idx = np.ones(shape=(data.shape[1]))
+    if lower_thresh is not None:
+        lower_thresh_idx =  np.sum(data, axis=0)>lower_thresh
+    if upper_thresh is not None:
+        upper_thresh_idx =  np.sum(data, axis=0)<upper_thresh
+            
+    thresh_idx = np.logical_and(lower_thresh_idx, upper_thresh_idx)
+    reduced_data = data[:,thresh_idx]
+    return reduced_data
