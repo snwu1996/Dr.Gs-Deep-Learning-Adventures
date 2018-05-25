@@ -147,11 +147,7 @@ class Data2:
         self.batch_num = 0
         if shuffle:
             self.shuffle()
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 7c76cadba77128ede121d79336d0542359ef8669
 ########################################################################################
 
 def train_validation_split(ligids, smiles, labels, num_val_lig=3046, num_val_smi=10581, shuffle=True):
